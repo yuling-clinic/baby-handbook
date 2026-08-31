@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>寶寶手冊 · 兒童健康紀錄</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#17302B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="寶寶手冊">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --paper:#EFF1EA; --card:#FFFFFF; --ink:#17302B; --ink2:#5C6B63; --ink3:#8B978F;
+  --line:#DBDFD3; --mint:#2E7D6F; --mint-soft:#E4EFEB;
+  --amber:#B5820F; --amber-soft:#F7EED8;
+  --stamp:#C4402F; --stamp-soft:#F8E6E2;
+  --r:14px;
+  --serif:"Noto Serif CJK TC","Songti TC","Source Han Serif TC",serif;
+  --sans:"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  --mono:ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:15px;line-height:1.6;
+  padding-bottom:calc(72px + var(--safe-b));
+}
+h1,h2,h3{font-family:var(--serif);font-weight:600;margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select{font:inherit;color:inherit}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ---------- header ---------- */
+header{
+  position:sticky;top:0;z-index:20;background:var(--ink);color:#EFF1EA;
+  padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;
+  display:flex;align-items:baseline;gap:10px;
+}
+header .who{font-family:var(--serif);font-size:17px;letter-spacing:.02em}
+header .age{font-family:var(--mono);font-size:13px;color:#9FB5AC;margin-left:auto}
+
+main{padding:16px 14px 8px;max-width:640px;margin:0 auto}
+.view{display:none}
+.view.on{display:block}
+
+/* ---------- summary ---------- */
+.summary{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:14px 16px;margin-bottom:16px;
+}
+.summary h2{font-size:15px;margin-bottom:8px}
+.summary p{margin:0;color:var(--ink2);font-size:14px}
+.tally{display:flex;gap:8px;margin-top:12px}
+.tally div{flex:1;text-align:center;padding:8px 4px;border-radius:10px;background:var(--paper)}
+.tally b{display:block;font-family:var(--mono);font-size:19px;line-height:1.2}
+.tally span{font-size:11px;color:var(--ink2)}
+.tally .od b{color:var(--stamp)} .tally .op b{color:var(--mint)}
+
+/* ---------- filter chips ---------- */
+.chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:12px;margin:0 -14px;padding-left:14px;padding-right:14px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:0 0 auto;border:1px solid var(--line);background:var(--card);
+  border-radius:999px;padding:6px 14px;font-size:13px;color:var(--ink2);
+}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#EFF1EA}
+
+/* ---------- ticket (signature element) ---------- */
+.ticket{
+  position:relative;display:flex;background:var(--card);
+  border:1px solid var(--line);border-radius:var(--r);
+  margin-bottom:10px;overflow:hidden;
+}
+.ticket .stub{
+  flex:0 0 46px;display:flex;align-items:center;justify-content:center;
+  border-right:1px dashed var(--line);background:var(--paper);
+}
+.ticket .stub span{
+  writing-mode:vertical-rl;font-family:var(--serif);font-size:12px;
+  letter-spacing:.28em;color:var(--ink2);
+}
+.ticket .body{flex:1;padding:12px 14px;min-width:0}
+.ticket h3{font-size:15.5px;letter-spacing:.01em}
+.ticket .win{font-family:var(--mono);font-size:12.5px;color:var(--ink3);margin-top:2px}
+.ticket .desc{font-size:13px;color:var(--ink2);margin-top:6px}
+.ticket .row{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+.tag{font-size:11.5px;padding:2px 9px;border-radius:999px;letter-spacing:.02em}
+.tag.od{background:var(--stamp-soft);color:var(--stamp)}
+.tag.op{background:var(--mint-soft);color:var(--mint)}
+.tag.up{background:var(--paper);color:var(--ink3)}
+.tag.self{background:var(--amber-soft);color:var(--amber)}
+
+.ticket.done{background:#F7F8F4}
+.ticket.done .body{padding-right:82px}
+.ticket.done h3,.ticket.done .win{color:var(--ink3)}
+.ticket .stamp{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%) rotate(-11deg);
+  width:58px;height:58px;border:2.5px solid var(--stamp);border-radius:50%;
+  color:var(--stamp);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:14px;letter-spacing:.05em;opacity:.85;pointer-events:none;
+  animation:stampin .22s ease-out;
+}
+.ticket .stamp em{font-style:normal;font-family:var(--mono);font-size:8.5px;letter-spacing:-.02em;margin-top:1px}
+@keyframes stampin{from{transform:translateY(-50%) rotate(-11deg) scale(1.5);opacity:0}
+                   to{transform:translateY(-50%) rotate(-11deg) scale(1);opacity:.85}}
+@media (prefers-reduced-motion:reduce){.ticket .stamp{animation:none}}
+
+.btn{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:6px 12px;font-size:13px}
+.btn.solid{background:var(--ink);border-color:var(--ink);color:#EFF1EA}
+.btn.ghost{border-style:dashed;color:var(--ink2)}
+.btn:focus-visible,.chip:focus-visible,.tab:focus-visible,input:focus-visible,select:focus-visible{
+  outline:2.5px solid var(--mint);outline-offset:2px}
+
+.section-label{
+  font-family:var(--serif);font-size:12.5px;letter-spacing:.22em;color:var(--ink3);
+  margin:22px 0 10px;
+}
+.empty{border:1px dashed var(--line);border-radius:var(--r);padding:22px 16px;text-align:center;color:var(--ink2);font-size:14px}
+
+/* ---------- forms ---------- */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;color:var(--ink2);margin-bottom:5px}
+.field input,.field select{
+  width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);
+}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.card h2{font-size:15px;margin-bottom:12px}
+.note{font-size:12.5px;color:var(--ink3);line-height:1.55}
+
+/* ---------- chart ---------- */
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.seg button{flex:1;background:var(--card);border:0;padding:9px 0;font-size:13.5px;color:var(--ink2)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#EFF1EA}
+svg.chart{width:100%;height:auto;display:block;background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+table.meas{width:100%;border-collapse:collapse;margin-top:12px;font-size:13.5px}
+table.meas th{text-align:left;font-weight:500;color:var(--ink3);font-size:12px;padding:6px 4px;border-bottom:1px solid var(--line)}
+table.meas td{padding:8px 4px;border-bottom:1px solid var(--line);font-family:var(--mono)}
+table.meas td:last-child{text-align:right;font-family:var(--sans)}
+.del{border:0;background:none;color:var(--ink3);font-size:12px;text-decoration:underline}
+
+/* ---------- milestones ---------- */
+.ms-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.ms-list .ms-item:last-child{border-bottom:0}
+.ms-item p{margin:0;flex:1;font-size:14px}
+.ms-item .yn{display:flex;gap:6px}
+.yn button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:5px 11px;font-size:13px;color:var(--ink2)}
+.yn button[aria-pressed="true"][data-v="y"]{background:var(--mint);border-color:var(--mint);color:#fff}
+.yn button[aria-pressed="true"][data-v="n"]{background:var(--stamp);border-color:var(--stamp);color:#fff}
+.alert{background:var(--stamp-soft);border:1px solid #EDC7C0;color:#8E2B1F;border-radius:10px;padding:11px 13px;font-size:13.5px;margin-top:12px}
+
+/* ---------- bottom tabs ---------- */
+nav.tabs{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;
+  background:rgba(255,255,255,.94);backdrop-filter:blur(10px);
+  border-top:1px solid var(--line);padding-bottom:var(--safe-b);
+}
+.tab{flex:1;border:0;background:none;padding:10px 0 9px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--ink3);font-size:11px}
+.tab[aria-selected="true"]{color:var(--ink)}
+.tab svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tab[aria-selected="true"]::before{content:"";position:absolute;top:0;width:34px;height:2.5px;background:var(--ink);border-radius:0 0 3px 3px}
+.tab{position:relative}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="who" id="hName">尚未設定寶寶</span>
+  <span class="age mono" id="hAge"></span>
+</header>
+
+<main>
+
+<!-- ============ 時程 ============ -->
+<section class="view on" id="v-schedule">
+  <div class="summary">
+    <h2 id="sumTitle">接下來要做的事</h2>
+    <p id="sumText">先到「設定」填寫寶寶的出生日期，時程就會自動排出來。</p>
+    <div class="tally">
+      <div class="od"><b id="tOd">–</b><span>已逾期</span></div>
+      <div class="op"><b id="tOp">–</b><span>現在可做</span></div>
+      <div><b id="tDone">–</b><span>已完成</span></div>
+    </div>
+  </div>
+
+  <div class="chips" id="chips"></div>
+  <div id="list"></div>
+
+  <div class="section-label">已完成</div>
+  <div id="listDone"></div>
+</section>
+
+<!-- ============ 生長 ============ -->
+<section class="view" id="v-growth">
+  <div class="card">
+    <h2>新增一筆測量</h2>
+    <div class="field"><label for="mDate">測量日期</label><input type="date" id="mDate"></div>
+    <div class="grid3">
+      <div class="field"><label for="mHt">身高 cm</label><input type="number" step="0.1" inputmode="decimal" id="mHt"></div>
+      <div class="field"><label for="mWt">體重 kg</label><input type="number" step="0.01" inputmode="decimal" id="mWt"></div>
+      <div class="field"><label for="mHc">頭圍 cm</label><input type="number" step="0.1" inputmode="decimal" id="mHc"></div>
+    </div>
+    <button class="btn solid" id="addMeas">加入紀錄</button>
+  </div>
+
+  <div class="seg" id="segMetric">
+    <button data-m="ht" aria-pressed="true">身高</button>
+    <button data-m="wt" aria-pressed="false">體重</button>
+    <button data-m="hc" aria-pressed="false">頭圍</button>
+  </div>
+  <svg class="chart" id="chart" viewBox="0 0 340 250" role="img" aria-label="生長曲線"></svg>
+  <div id="refNote"></div>
+  <table class="meas" id="measTable"></table>
+</section>
+
+<!-- ============ 發展 ============ -->
+<section class="view" id="v-dev">
+  <div class="card">
+    <h2 id="msTitle">發展里程碑</h2>
+    <p class="note" id="msSub">依寶寶月齡顯示該階段的觀察項目。看診前先勾一遍，把「否」的項目直接跟醫師討論。</p>
+    <div class="field" style="margin-top:12px">
+      <label for="msStage">階段</label>
+      <select id="msStage"></select>
+    </div>
+  </div>
+  <div class="card" id="msCard"></div>
+</section>
+
+<!-- ============ 設定 ============ -->
+<section class="view" id="v-settings">
+  <div class="card">
+    <h2>寶寶資料</h2>
+    <div class="field"><label for="bName">暱稱</label><input id="bName" placeholder="例如：小豆子"></div>
+    <div class="grid2">
+      <div class="field"><label for="bDob">出生日期</label><input type="date" id="bDob"></div>
+      <div class="field"><label for="bSex">性別</label>
+        <select id="bSex"><option value="M">男</option><option value="F">女</option></select>
+      </div>
+    </div>
+    <button class="btn solid" id="saveBaby">儲存</button>
+  </div>
+
+  <div class="card">
+    <h2>提醒</h2>
+    <p class="note">把還沒完成的項目匯出成行事曆檔，手機日曆會在前一天提醒你。iPhone 與 Android 都適用。</p>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn solid" id="icsBtn">匯出行事曆提醒</button>
+      <button class="btn" id="notifBtn">開啟到期通知</button>
+    </div>
+    <p class="note" id="notifNote" style="margin-top:10px">到期通知只在你打開這個 App 時檢查，不會在背景推播。長期提醒請用行事曆匯出。</p>
+  </div>
+
+  <div class="card">
+    <h2>資料</h2>
+    <p class="note">所有紀錄只存在這支手機的瀏覽器裡，不會上傳到任何伺服器。換手機或清除瀏覽器資料前，記得先匯出備份。</p>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn" id="expBtn">匯出備份</button>
+      <button class="btn" id="impBtn">匯入備份</button>
+      <input type="file" id="impFile" accept="application/json" hidden>
+      <button class="btn ghost" id="clrBtn">清除全部資料</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>資料依據</h2>
+    <p class="note">
+      兒童預防保健服務 9 次（115 年 7 月 1 日起「7+2」新制）、兒童發展篩檢 6 次（113 年 7 月 1 日起）依國民健康署公告時程；
+      常規疫苗依疾病管制署現行兒童預防接種時程表。政策會調整，正式接種與檢查請以院所與最新公告為準。
+      本 App 為時程計算與紀錄工具，不含手冊衛教內文。
+    </p>
+  </div>
+</section>
+
+</main>
+
+<nav class="tabs" role="tablist">
+  <button class="tab" role="tab" aria-selected="true" data-v="schedule">
+    <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>時程</button>
+  <button class="tab" role="tab" aria-selected="false" data-v="growth">
+    <svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M7 15l4-5 3 3 5-7"/></svg>生長</button>
+  <button class="tab" role="tab" aria-selected="false" data-v="dev">
+    <svg viewBox="0 0 24 24"><path d="M9 11l2 2 4-4"/><rect x="4" y="4" width="16" height="16" rx="3"/></svg>發展</button>
+  <button class="tab" role="tab" aria-selected="false" data-v="settings">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/></svg>設定</button>
+</nav>
+
+<script>
+/* ==================================================================
+   生長曲線參考值 REF
+   ------------------------------------------------------------------
+   預設為空 → 圖上只畫寶寶自己的曲線。
+   填入後會自動畫出 P3 / P15 / P50 / P85 / P97 五條參考線並算百分位。
+   格式（LMS，月齡為索引）：
+     REF.ht.M = [{a:0,L:..,M:..,S:..}, {a:1,...}, ...]   a = 月齡
+   ht=身長/身高, wt=體重, hc=頭圍；M=男, F=女。
+   月齡之間會線性內插，所以不必逐月填，關鍵月齡即可。
+   ================================================================== */
+const REF = { ht:{M:[],F:[]}, wt:{M:[],F:[]}, hc:{M:[],F:[]} };
+
+/* ---------------- state ---------------- */
+const KEY='bbh.v1';
+const blank={baby:{name:'',sex:'M',dob:''},done:{},meas:[],ms:{}};
+let S=load();
+function load(){try{const r=localStorage.getItem(KEY);return r?Object.assign({},blank,JSON.parse(r)):structuredClone(blank)}catch(e){return structuredClone(blank)}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+/* ---------------- date utils ---------------- */
+const DAY=86400000;
+function d(s){const[y,m,dd]=s.split('-').map(Number);return new Date(y,m-1,dd)}
+function iso(x){return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')}
+function addM(x,m){const r=new Date(x.getFullYear(),x.getMonth()+m,1);const last=new Date(r.getFullYear(),r.getMonth()+1,0).getDate();r.setDate(Math.min(x.getDate(),last));return r}
+function addD(x,n){const r=new Date(x);r.setDate(r.getDate()+n);return r}
+function today(){const t=new Date();return new Date(t.getFullYear(),t.getMonth(),t.getDate())}
+function ageM(dob,at){let m=(at.getFullYear()-dob.getFullYear())*12+(at.getMonth()-dob.getMonth());if(at.getDate()<dob.getDate())m--;return m}
+function ageMf(dob,at){return (at-dob)/DAY/30.4375}
+function ageText(dob){
+  const t=today(),days=Math.round((t-dob)/DAY);
+  if(days<0) return '尚未出生';
+  if(days<31) return days+' 天';
+  const m=ageM(dob,t);
+  return m<24 ? m+' 個月' : Math.floor(m/12)+' 歲 '+(m%12)+' 個月';
+}
+function fmt(x){return (x.getMonth()+1)+'/'+x.getDate()}
+function fmtFull(x){return x.getFullYear()+'/'+String(x.getMonth()+1).padStart(2,'0')+'/'+String(x.getDate()).padStart(2,'0')}
+
+/* ---------------- 時程資料 ---------------- */
+// 兒童預防保健 9 次（115/7/1「7+2」新制）+ 出生 6 天內新生兒檢查
+const CHECKUPS=[
+  {id:'c0',n:'新生兒健康檢查',t:'出生 6 天內',fromD:0,toD:6,desc:'身體診察；先天性代謝異常疾病篩檢（出生滿 48 小時）、新生兒聽力篩檢'},
+  {id:'c1',n:'兒童預防保健 第 1 次',from:0.5,to:2,fromD:14,desc:'發展診察：俯臥姿勢、驚嚇反應、眨眼、聽力反應'},
+  {id:'c2',n:'兒童預防保健 第 2 次',from:2,to:4,desc:'發展診察：抬頭、對人微笑、眼神追視、發咕咕聲'},
+  {id:'c3',n:'兒童預防保健 第 3 次',from:4,to:6,desc:'發展診察：頸部支撐、手掌張開、發出笑聲、眼神追視'},
+  {id:'c4',n:'兒童預防保健 第 4 次',from:6,to:12,desc:'發展診察：翻身、伸手拿東西、對聲音敏銳、蓋臉測試、發ㄅㄚㄇㄚ音、坐穩、爬、扶站、喚名反應'},
+  {id:'c5',n:'兒童預防保健 第 5 次',from:12,to:18,desc:'發展診察：躺姿變坐姿、放手走、拇指食指對握拿物、聽懂簡單指令、說單字、尋找物品'},
+  {id:'c6',n:'兒童預防保健 第 6 次',from:18,to:24,desc:'發展診察：扶欄杆上樓、蹲下及恢復站姿、手拿杯喝水、指認身體部位、模仿動作、象徵性玩法、使用湯匙'},
+  {id:'c7',n:'兒童預防保健 第 7 次',from:24,to:36,desc:'發展診察：下樓梯、雙腳跳、疊積木、說片語、脫鞋襪、說至少 10 個語詞、假扮玩法'},
+  {id:'c8',n:'兒童預防保健 第 8 次',from:36,to:60,desc:'發展診察：會跳、騎三輪車、畫圓形、自行上廁所、解釦子脫衣服、敘述物品用途、辨認顏色、與同儕輪流合作'},
+  {id:'c9',n:'兒童預防保健 第 9 次',from:60,to:84,desc:'發展診察：單腳站、一腳一階走樓梯、剪刀剪紙、扣釦子或拉拉鍊、說話清楚、理解連續步驟指令、遵守遊戲規則'}
+];
+// 兒童發展篩檢 6 次（113/7/1 起）
+const SCREENS=[
+  {id:'s1',n:'兒童發展篩檢 第 1 次',from:6,to:10},{id:'s2',n:'兒童發展篩檢 第 2 次',from:10,to:18},
+  {id:'s3',n:'兒童發展篩檢 第 3 次',from:18,to:24},{id:'s4',n:'兒童發展篩檢 第 4 次',from:24,to:36},
+  {id:'s5',n:'兒童發展篩檢 第 5 次',from:36,to:60},{id:'s6',n:'兒童發展篩檢 第 6 次',from:60,to:84}
+];
+// 常規疫苗（依 115 年 6 月版兒童健康手冊「預防接種時程及紀錄表」）
+const VAX=[
+  {id:'v_hbig',n:'B 型肝炎免疫球蛋白',fromD:0,toD:1,cond:true,note:'母親為 B 型肝炎帶原者之新生兒，出生 24 小時內儘速接種'},
+  {id:'v_hb1',n:'B 型肝炎 第 1 劑',fromD:0,toD:1,note:'出生 24 小時內儘速接種'},
+  {id:'v_hb2',n:'B 型肝炎 第 2 劑',from:1,to:2},
+  {id:'v_pcv1',n:'13 價結合型肺炎鏈球菌 第 1 劑',from:2,to:4},
+  {id:'v_5in1a',n:'五合一 第 1 劑',from:2,to:4,note:'白喉破傷風非細胞性百日咳、b 型嗜血桿菌及不活化小兒麻痺'},
+  {id:'v_rota1',n:'輪狀病毒 第 1 劑',from:2,to:4,self:true},
+  {id:'v_pcv2',n:'13 價結合型肺炎鏈球菌 第 2 劑',from:4,to:6},
+  {id:'v_5in1b',n:'五合一 第 2 劑',from:4,to:6},
+  {id:'v_rota2',n:'輪狀病毒 第 2 劑',from:4,to:6,self:true},
+  {id:'v_bcg',n:'卡介苗',from:5,to:8,note:'建議接種時間為出生滿 5 至 8 個月'},
+  {id:'v_hb3',n:'B 型肝炎 第 3 劑',from:6,to:9},
+  {id:'v_5in1c',n:'五合一 第 3 劑',from:6,to:9},
+  {id:'v_rota3',n:'輪狀病毒 第 3 劑',from:6,to:8,self:true,note:'採三劑時程者才需接種'},
+  {id:'v_mmr1',n:'麻疹腮腺炎德國麻疹（MMR） 第 1 劑',from:12,to:15},
+  {id:'v_var1',n:'水痘疫苗',from:12,to:15},
+  {id:'v_pcv3',n:'13 價結合型肺炎鏈球菌 第 3 劑',from:12,to:15},
+  {id:'v_hbtest',n:'B 型肝炎表面抗原及抗體檢測',from:12,to:15,cond:true,note:'母親為 B 型肝炎 s 抗原陽性者，寶寶滿 12 個月時檢測 HBsAg 及 anti-HBs'},
+  {id:'v_je1',n:'日本腦炎（活性減毒） 第 1 劑',from:15,to:18},
+  {id:'v_5in1d',n:'五合一 第 4 劑',from:18,to:24},
+  {id:'v_hav1',n:'A 型肝炎 第 1 劑',from:18,to:24,note:'實施對象為 106 年以後出生之幼兒；114/1/1 起調整為滿 18 個月接種第 1 劑'},
+  {id:'v_je2',n:'日本腦炎（活性減毒） 第 2 劑',from:27,to:33,note:'與第 1 劑至少間隔 12 個月'},
+  {id:'v_hav2',n:'A 型肝炎 第 2 劑',from:27,to:33,note:'與第 1 劑至少間隔 6 個月'},
+  {id:'v_var2',n:'水痘 第 2 劑',from:48,to:72,self:true,note:'出生滿 4 至 6 歲接種'},
+  {id:'v_4in1',n:'四合一（白喉破傷風非細胞性百日咳及不活化小兒麻痺）',from:60,to:84,note:'滿 5 歲至入國小前'},
+  {id:'v_mmr2',n:'麻疹腮腺炎德國麻疹（MMR） 第 2 劑',from:60,to:84,note:'滿 5 歲至入國小前'}
+];
+// 流感疫苗：每年 10 月起，依手冊分齡欄位逐年 1 次
+const FLU_BANDS=[[6,12,'6 個月至 1 歲'],[12,24,'1 至 2 歲'],[24,36,'2 至 3 歲'],[36,48,'3 至 4 歲'],
+                 [48,60,'4 至 5 歲'],[60,72,'5 至 6 歲'],[72,84,'6 歲至入國小前']];
+FLU_BANDS.forEach(([a,b,lab],i)=>VAX.push({id:'v_flu'+i,n:'流感疫苗（'+lab+'）',from:a,to:b,
+  note:'每年 10 月起接種。未滿 3 歲初次接種、或本流感季前僅接種 1 劑者需接種 2 劑，間隔 4 週'}));
+// 牙齒塗氟：未滿 6 歲每半年 1 次（手冊自第 4 次健檢起提醒）
+const FLU=[];
+for(let m=6;m<72;m+=6) FLU.push({id:'f'+m,n:'牙齒塗氟',from:m,to:m+6});
+
+const CATS={c:{label:'健檢',arr:CHECKUPS},s:{label:'發展篩檢',arr:SCREENS},v:{label:'疫苗',arr:VAX},f:{label:'塗氟',arr:FLU}};
+
+function catOf(id){return id[0]==='c'?'c':id[0]==='s'?'s':id[0]==='v'?'v':'f'}
+function stubOf(it,cat){
+  return {c:'健檢',s:'篩檢',v:'疫苗',f:'塗氟'}[cat];
+}
+function items(){
+  const out=[];
+  CHECKUPS.forEach(x=>out.push(Object.assign({cat:'c'},x)));
+  SCREENS.forEach(x=>out.push(Object.assign({cat:'s',desc:'動作、語言、認知、社會發展四大面向的標準化篩檢'},x)));
+  VAX.forEach(x=>out.push(Object.assign({cat:'v'},x)));
+  FLU.forEach(x=>out.push(Object.assign({cat:'f',desc:'未滿 6 歲每半年 1 次'},x)));
+  return out;
+}
+function win(it,dob){
+  const st = it.fromD!==undefined ? addD(dob,it.fromD) : addM(dob,it.from);
+  const en = it.toD!==undefined ? addD(dob,it.toD) : addM(dob,it.to);
+  return [st,en];
+}
+function statusOf(it,dob){
+  if(S.done[it.id]) return 'done';
+  const [st,en]=win(it,dob), t=today();
+  if(t>en) return 'od';
+  if(t>=st) return 'op';
+  return 'up';
+}
+
+/* ---------------- 渲染：時程 ---------------- */
+let filter='all';
+function renderChips(){
+  const c=document.getElementById('chips');
+  const defs=[['all','全部'],['c','健檢'],['v','疫苗'],['s','發展篩檢'],['f','塗氟']];
+  c.innerHTML=defs.map(([k,l])=>`<button class="chip" data-k="${k}" aria-pressed="${filter===k}">${l}</button>`).join('');
+  c.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{filter=b.dataset.k;renderChips();renderSchedule()});
+}
+function ticketHTML(it,dob,st){
+  const [a,b]=win(it,dob);
+  const tags={od:'<span class="tag od">已逾期</span>',op:'<span class="tag op">現在可做</span>',up:'<span class="tag up">尚未到</span>',done:''}[st];
+  const self=(it.self?'<span class="tag self">自費</span>':'')+(it.cond?'<span class="tag self">特定對象</span>':'');
+  const doneDate=S.done[it.id];
+  return `<article class="ticket ${st==='done'?'done':''}">
+    <div class="stub"><span>${stubOf(it,it.cat)}</span></div>
+    <div class="body">
+      <h3>${it.n}${it.t?' · '+it.t:''}</h3>
+      <div class="win mono">${fmtFull(a)} – ${fmtFull(b)}</div>
+      ${it.desc||it.note?`<div class="desc">${it.note||it.desc}</div>`:''}
+      <div class="row">${tags}${self}
+        ${st==='done'
+          ? `<button class="btn ghost" data-undo="${it.id}">取消完成</button>`
+          : `<button class="btn ${st==='up'?'':'solid'}" data-do="${it.id}">標記完成</button>`}
+      </div>
+    </div>
+    ${st==='done'?`<div class="stamp">完成<em>${doneDate.replace(/-/g,'.')}</em></div>`:''}
+  </article>`;
+}
+function renderSchedule(){
+  const list=document.getElementById('list'), listDone=document.getElementById('listDone');
+  if(!S.baby.dob){
+    list.innerHTML='<div class="empty">還沒有出生日期。到「設定」填好之後，健檢、疫苗、發展篩檢和塗氟的時間就會自動排出來。</div>';
+    listDone.innerHTML='';document.getElementById('tOd').textContent='–';
+    document.getElementById('tOp').textContent='–';document.getElementById('tDone').textContent='–';
+    return;
+  }
+  const dob=d(S.baby.dob);
+  let all=items().filter(it=>filter==='all'||it.cat===filter);
+  all.forEach(it=>{it._st=statusOf(it,dob);it._w=win(it,dob)});
+  const order={od:0,op:1,up:2};
+  const pend=all.filter(x=>x._st!=='done').sort((a,b)=>order[a._st]-order[b._st]||a._w[1]-b._w[1]);
+  const done=all.filter(x=>x._st==='done').sort((a,b)=>b._w[0]-a._w[0]);
+
+  list.innerHTML = pend.length?pend.map(it=>ticketHTML(it,dob,it._st)).join(''):'<div class="empty">這個分類目前沒有待辦項目。</div>';
+  listDone.innerHTML = done.length?done.map(it=>ticketHTML(it,dob,'done')).join(''):'<div class="empty">還沒有標記完成的項目。</div>';
+
+  const allU=items();allU.forEach(it=>it._st=statusOf(it,dob));
+  const nOd=allU.filter(x=>x._st==='od').length, nOp=allU.filter(x=>x._st==='op').length, nDn=allU.filter(x=>x._st==='done').length;
+  document.getElementById('tOd').textContent=nOd;
+  document.getElementById('tOp').textContent=nOp;
+  document.getElementById('tDone').textContent=nDn;
+
+  const next=allU.filter(x=>x._st==='up').sort((a,b)=>win(a,dob)[0]-win(b,dob)[0])[0];
+  const sum=document.getElementById('sumText');
+  if(nOd) sum.textContent=`有 ${nOd} 項已經超過建議時間，建議先補做。`;
+  else if(nOp) sum.textContent=`現在有 ${nOp} 項可以做。` + (next?`下一項是 ${next.n}，${fmtFull(win(next,dob)[0])} 開始。`:'');
+  else if(next) sum.textContent=`目前都跟上進度。下一項是 ${next.n}，${fmtFull(win(next,dob)[0])} 開始。`;
+  else sum.textContent='未滿 7 歲的公費項目都完成了。';
+
+  list.querySelectorAll('[data-do]').forEach(b=>b.onclick=()=>{S.done[b.dataset.do]=iso(today());save();renderSchedule()});
+  listDone.querySelectorAll('[data-undo]').forEach(b=>b.onclick=()=>{delete S.done[b.dataset.undo];save();renderSchedule()});
+  list.querySelectorAll('[data-undo]').forEach(b=>b.onclick=()=>{delete S.done[b.dataset.undo];save();renderSchedule()});
+}
+
+/* ---------------- 生長 ---------------- */
+let metric='ht';
+const MLABEL={ht:{t:'身高／身長',u:'cm'},wt:{t:'體重',u:'kg'},hc:{t:'頭圍',u:'cm'}};
+const PCTS=[[3,-1.881],[15,-1.036],[50,0],[85,1.036],[97,1.881]];
+
+function lms(m,a){
+  const t=REF[m][S.baby.sex||'M'];if(!t||!t.length)return null;
+  if(a<=t[0].a)return t[0];
+  if(a>=t[t.length-1].a)return t[t.length-1];
+  for(let i=1;i<t.length;i++){
+    if(a<=t[i].a){const p=t[i-1],q=t[i],r=(a-p.a)/(q.a-p.a);
+      return {L:p.L+(q.L-p.L)*r,M:p.M+(q.M-p.M)*r,S:p.S+(q.S-p.S)*r}}
+  }
+  return null;
+}
+function valAtZ(m,a,z){const p=lms(m,a);if(!p)return null;
+  return p.L===0 ? p.M*Math.exp(p.S*z) : p.M*Math.pow(1+p.L*p.S*z,1/p.L)}
+function zOf(m,a,v){const p=lms(m,a);if(!p)return null;
+  return p.L===0 ? Math.log(v/p.M)/p.S : (Math.pow(v/p.M,p.L)-1)/(p.L*p.S)}
+function zToP(z){ // 常態累積機率
+  const t=1/(1+.2316419*Math.abs(z));
+  const dn=.3989423*Math.exp(-z*z/2);
+  let p=dn*t*(1.330274*Math.pow(t,4)-1.821256*Math.pow(t,3)+1.781478*t*t-.356538*t+.3193815);
+  p=z>0?1-p:p;return p*100;
+}
+function drawChart(){
+  const svg=document.getElementById('chart'), W=340,H=250,L=38,R=10,T=14,B=30;
+  const dob=S.baby.dob?d(S.baby.dob):null;
+  const pts=(S.meas||[]).filter(r=>r[metric]!=null&&dob).map(r=>({a:ageMf(dob,d(r.date)),v:+r[metric]})).sort((a,b)=>a.a-b.a);
+  if(!dob||!pts.length){svg.innerHTML=`<text x="170" y="125" text-anchor="middle" fill="#8B978F" font-size="12" font-family="sans-serif">還沒有${MLABEL[metric].t}紀錄</text>`;
+    document.getElementById('refNote').innerHTML='';renderMeasTable();return}
+
+  const hasRef=REF[metric][S.baby.sex||'M'].length>0;
+  const aMax=Math.max(12,Math.ceil((pts[pts.length-1].a+2)/6)*6), aMin=0;
+  let vs=pts.map(p=>p.v);
+  if(hasRef) for(let a=aMin;a<=aMax;a+=1){const lo=valAtZ(metric,a,-1.881),hi=valAtZ(metric,a,1.881);if(lo)vs.push(lo,hi)}
+  const vMin=Math.min(...vs)*0.94, vMax=Math.max(...vs)*1.06;
+  const X=a=>L+(a-aMin)/(aMax-aMin)*(W-L-R);
+  const Y=v=>H-B-(v-vMin)/(vMax-vMin)*(H-T-B);
+
+  let g='';
+  // 格線
+  for(let i=0;i<=4;i++){const v=vMin+(vMax-vMin)*i/4;
+    g+=`<line x1="${L}" y1="${Y(v)}" x2="${W-R}" y2="${Y(v)}" stroke="#E7EAE0"/>`+
+       `<text x="${L-5}" y="${Y(v)+3.5}" text-anchor="end" font-size="9" fill="#8B978F" font-family="monospace">${v.toFixed(v<20?1:0)}</text>`}
+  const step=aMax<=24?6:12;
+  for(let a=0;a<=aMax;a+=step){
+    g+=`<line x1="${X(a)}" y1="${T}" x2="${X(a)}" y2="${H-B}" stroke="#F0F2EA"/>`+
+       `<text x="${X(a)}" y="${H-B+14}" text-anchor="middle" font-size="9" fill="#8B978F" font-family="monospace">${a<24?a+'m':(a/12)+'y'}</text>`}
+  // 參考線
+  if(hasRef){
+    PCTS.forEach(([p,z])=>{
+      let dpath='';for(let a=aMin;a<=aMax;a+=1){const v=valAtZ(metric,a,z);if(v==null)continue;dpath+=(dpath?'L':'M')+X(a)+' '+Y(v)}
+      const main=p===50;
+      g+=`<path d="${dpath}" fill="none" stroke="${main?'#B8C2B6':'#DCE0D4'}" stroke-width="${main?1.3:1}" ${main?'':'stroke-dasharray="3 3"'}/>`+
+         `<text x="${W-R-1}" y="${Y(valAtZ(metric,aMax,z))-3}" text-anchor="end" font-size="8" fill="#A8B2A6" font-family="monospace">P${p}</text>`})
+  }
+  // 寶寶曲線
+  let dp='';pts.forEach((p,i)=>dp+=(i?'L':'M')+X(p.a)+' '+Y(p.v));
+  g+=`<path d="${dp}" fill="none" stroke="#2E7D6F" stroke-width="2" stroke-linejoin="round"/>`;
+  pts.forEach(p=>g+=`<circle cx="${X(p.a)}" cy="${Y(p.v)}" r="3.2" fill="#2E7D6F"/>`);
+  g+=`<text x="${L}" y="${T-2}" font-size="9.5" fill="#5C6B63" font-family="sans-serif">${MLABEL[metric].t}（${MLABEL[metric].u}）</text>`;
+  svg.innerHTML=g;
+
+  const note=document.getElementById('refNote');
+  if(hasRef){
+    const last=pts[pts.length-1], z=zOf(metric,last.a,last.v);
+    note.innerHTML=`<p class="note" style="margin:10px 2px 0">最新一筆 ${last.v}${MLABEL[metric].u}：約第 <b class="mono">${zToP(z).toFixed(1)}</b> 百分位（Z = ${z.toFixed(2)}）。</p>`;
+  }else{
+    note.innerHTML=`<p class="note" style="margin:10px 2px 0">目前只畫出寶寶自己的曲線。把百分位參考表填進 index.html 最上方的 <code>REF</code>，P3–P97 參考線和百分位計算會自動出現。</p>`;
+  }
+  renderMeasTable();
+}
+function renderMeasTable(){
+  const t=document.getElementById('measTable');
+  const rows=(S.meas||[]).slice().sort((a,b)=>a.date<b.date?1:-1);
+  if(!rows.length){t.innerHTML='';return}
+  t.innerHTML='<tr><th>日期</th><th>身高</th><th>體重</th><th>頭圍</th><th></th></tr>'+
+    rows.map((r,i)=>`<tr><td>${r.date.slice(2).replace(/-/g,'/')}</td><td>${r.ht??'–'}</td><td>${r.wt??'–'}</td><td>${r.hc??'–'}</td>
+      <td><button class="del" data-dm="${r.date}">刪除</button></td></tr>`).join('');
+  t.querySelectorAll('[data-dm]').forEach(b=>b.onclick=()=>{
+    S.meas=S.meas.filter(r=>r.date!==b.dataset.dm);save();drawChart()});
+}
+
+/* ---------------- 發展里程碑 ---------------- */
+const MS=[
+  {id:'m1',n:'出生 2 週至 2 個月',from:0,items:['趴著時會嘗試抬頭或轉頭','聽到大聲響會有驚嚇反應','眼睛會眨、對強光有反應','聽到聲音會有反應']},
+  {id:'m2',n:'2 至 4 個月',from:2,items:['趴著能把頭抬起來','看到熟悉的人會微笑','眼睛會跟著移動的東西轉','會發出咕咕聲']},
+  {id:'m3',n:'4 至 6 個月',from:4,items:['抱起來時脖子撐得住','手掌大多時候是張開的','會發出笑聲','眼神會追著東西看']},
+  {id:'m4',n:'6 個月至 1 歲',from:6,items:['會翻身','會伸手拿東西','聽到聲音會轉頭找','會把蓋在臉上的布拿開','坐得穩','會爬','扶著東西能站','會把東西從一手換到另一手','叫名字會有反應','會發出「ㄅㄚ」「ㄇㄚ」的音']},
+  {id:'m5',n:'1 歲至 1 歲半',from:12,items:['能從躺著自己坐起來','放手能走幾步','會用拇指和食指捏起小東西','聽得懂簡單的指令','至少會說一個有意義的單字','東西不見了會去找','聽到「再見」知道是什麼意思']},
+  {id:'m6',n:'1 歲半至 2 歲',from:18,items:['扶著欄杆能上樓梯','蹲下後能自己站起來','會自己拿杯子喝水','指得出身體部位','會模仿大人的動作','看到有趣的東西會拿給大人看','會用湯匙','會假裝拿東西當別的東西玩']},
+  {id:'m7',n:'2 歲至 3 歲',from:24,items:['會自己下樓梯','雙腳能一起跳','會疊積木','會說兩三個字的片語','至少會說 10 個語詞','會自己脫鞋襪','指得出圖卡上的東西','會玩扮家家酒']},
+  {id:'m8',n:'3 歲至 5 歲',from:36,items:['會跳','會騎三輪車','畫得出圓形','會自己上廁所','會解釦子、自己脫衣服','會用「我、你、他」','說得出東西是做什麼用的','分得出常見顏色','會用句子和人對話','和小朋友玩會輪流或合作']},
+  {id:'m9',n:'5 歲至未滿 7 歲',from:60,items:['單腳能站幾秒','上樓梯會一腳一階','會用剪刀剪紙','會玩角色扮演','會扣釦子或拉拉鍊','講話別人聽得懂','聽得懂連續兩三個步驟的指令','玩遊戲會遵守規則','情緒和注意力大致穩定']}
+];
+let msStage=null;
+function renderMS(){
+  const sel=document.getElementById('msStage'), card=document.getElementById('msCard');
+  if(!S.baby.dob){card.innerHTML='<div class="empty">先在「設定」填好出生日期。</div>';sel.innerHTML='';return}
+  const m=ageM(d(S.baby.dob),today());
+  if(msStage===null){const auto=MS.filter(s=>m>=s.from).pop()||MS[0];msStage=auto.id}
+  sel.innerHTML=MS.map(s=>`<option value="${s.id}" ${s.id===msStage?'selected':''}>${s.n}</option>`).join('');
+  sel.onchange=()=>{msStage=sel.value;renderMS()};
+  const st=MS.find(s=>s.id===msStage);
+  S.ms[st.id]=S.ms[st.id]||{};
+  const ans=S.ms[st.id];
+  card.innerHTML=`<h2>${st.n}</h2><div class="ms-list">`+st.items.map((txt,i)=>`
+    <div class="ms-item"><p>${txt}</p>
+      <div class="yn">
+        <button data-i="${i}" data-v="y" aria-pressed="${ans[i]==='y'}">是</button>
+        <button data-i="${i}" data-v="n" aria-pressed="${ans[i]==='n'}">否</button>
+      </div></div>`).join('')+'</div><div id="msAlert"></div>';
+  const no=st.items.filter((_,i)=>ans[i]==='n').length;
+  if(no) document.getElementById('msAlert').innerHTML=
+    `<div class="alert">有 ${no} 項勾「否」。發展本來就有個別差異，但建議在下次健檢時把這幾項直接提出來，讓醫師評估是否需要進一步的發展篩檢或轉介。</div>`;
+  card.querySelectorAll('.yn button').forEach(b=>b.onclick=()=>{
+    const i=b.dataset.i;ans[i]=ans[i]===b.dataset.v?undefined:b.dataset.v;save();renderMS()});
+}
+
+/* ---------------- 提醒 ---------------- */
+function pending(){
+  if(!S.baby.dob)return[];
+  const dob=d(S.baby.dob);
+  return items().filter(it=>{const s=statusOf(it,dob);return s==='op'||s==='up'})
+    .map(it=>({it,w:win(it,dob)})).sort((a,b)=>a.w[0]-b.w[0]);
+}
+function makeICS(){
+  const p=pending();if(!p.length)return null;
+  const nm=S.baby.name||'寶寶';
+  const stamp=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+  let out=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//bbh//child health//ZH','CALSCALE:GREGORIAN'];
+  p.forEach(({it,w},i)=>{
+    const start=w[0]>today()?w[0]:today();
+    const dt=iso(start).replace(/-/g,''), dtEnd=iso(addD(start,1)).replace(/-/g,'');
+    out.push('BEGIN:VEVENT',`UID:bbh-${it.id}-${i}@local`,`DTSTAMP:${stamp}`,
+      `DTSTART;VALUE=DATE:${dt}`,`DTEND;VALUE=DATE:${dtEnd}`,
+      `SUMMARY:${nm}｜${it.n}`,
+      `DESCRIPTION:建議時間 ${fmtFull(w[0])} 至 ${fmtFull(w[1])}${it.note?'。'+it.note:''}`,
+      'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY',`DESCRIPTION:${nm}｜${it.n}`,'END:VALARM','END:VEVENT');
+  });
+  out.push('END:VCALENDAR');
+  return out.join('\r\n');
+}
+function download(name,text,type){
+  const b=new Blob([text],{type:type||'text/plain;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+function checkNotify(){
+  if(!('Notification'in window)||Notification.permission!=='granted'||!S.baby.dob)return;
+  const dob=d(S.baby.dob);
+  const due=items().filter(it=>{const s=statusOf(it,dob);return s==='op'||s==='od'});
+  if(!due.length)return;
+  const key='bbh.notified.'+iso(today());
+  if(localStorage.getItem(key))return;
+  localStorage.setItem(key,'1');
+  new Notification(`${S.baby.name||'寶寶'}有 ${due.length} 項待完成`,{body:due.slice(0,3).map(x=>x.n).join('、')+(due.length>3?' 等':''),icon:'icon-192.png'});
+}
+
+/* ---------------- 事件綁定 ---------------- */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',x===t));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+t.dataset.v));
+  if(t.dataset.v==='growth')drawChart();
+  if(t.dataset.v==='dev')renderMS();
+  window.scrollTo(0,0);
+});
+document.getElementById('saveBaby').onclick=()=>{
+  S.baby.name=document.getElementById('bName').value.trim();
+  S.baby.dob=document.getElementById('bDob').value;
+  S.baby.sex=document.getElementById('bSex').value;
+  msStage=null;save();paintHeader();renderSchedule();
+  document.getElementById('saveBaby').textContent='已儲存';
+  setTimeout(()=>document.getElementById('saveBaby').textContent='儲存',1400);
+};
+document.getElementById('addMeas').onclick=()=>{
+  const dt=document.getElementById('mDate').value;
+  if(!dt){alert('請先填測量日期');return}
+  const g=id=>{const v=document.getElementById(id).value;return v===''?null:+v};
+  const rec={date:dt,ht:g('mHt'),wt:g('mWt'),hc:g('mHc')};
+  if(rec.ht==null&&rec.wt==null&&rec.hc==null){alert('至少填一項數值');return}
+  S.meas=(S.meas||[]).filter(r=>r.date!==dt);S.meas.push(rec);save();
+  ['mHt','mWt','mHc'].forEach(id=>document.getElementById(id).value='');
+  drawChart();
+};
+document.getElementById('segMetric').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  metric=b.dataset.m;
+  document.getElementById('segMetric').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  drawChart();
+});
+document.getElementById('icsBtn').onclick=()=>{
+  const t=makeICS();
+  if(!t){alert('目前沒有待完成的項目可以匯出');return}
+  download((S.baby.name||'baby')+'-健康時程.ics',t,'text/calendar;charset=utf-8');
+};
+document.getElementById('notifBtn').onclick=async()=>{
+  if(!('Notification'in window)){alert('這個瀏覽器不支援通知');return}
+  const p=await Notification.requestPermission();
+  document.getElementById('notifNote').textContent = p==='granted'
+    ? '通知已開啟。每天第一次打開 App 時，會提醒你有哪些項目到期。'
+    : '通知未開啟，可以改用行事曆匯出。';
+  if(p==='granted')checkNotify();
+};
+document.getElementById('expBtn').onclick=()=>download('寶寶手冊備份-'+iso(today())+'.json',JSON.stringify(S,null,2),'application/json');
+document.getElementById('impBtn').onclick=()=>document.getElementById('impFile').click();
+document.getElementById('impFile').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{S=Object.assign({},blank,JSON.parse(r.result));save();location.reload()}
+    catch(err){alert('這個檔案讀不出來，請確認是這個 App 匯出的備份。')}};
+  r.readAsText(f);
+};
+document.getElementById('clrBtn').onclick=()=>{
+  if(confirm('清除後無法復原，確定要刪除所有紀錄嗎？')){localStorage.removeItem(KEY);location.reload()}
+};
+
+/* ---------------- 啟動 ---------------- */
+function paintHeader(){
+  document.getElementById('hName').textContent=S.baby.name||(S.baby.dob?'寶寶':'尚未設定寶寶');
+  document.getElementById('hAge').textContent=S.baby.dob?ageText(d(S.baby.dob)):'';
+}
+document.getElementById('bName').value=S.baby.name||'';
+document.getElementById('bDob').value=S.baby.dob||'';
+document.getElementById('bSex').value=S.baby.sex||'M';
+document.getElementById('mDate').value=iso(today());
+paintHeader();renderChips();renderSchedule();checkNotify();
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
